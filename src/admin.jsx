@@ -102,7 +102,10 @@ function AdminApp() {
     setCloneBusy(true);
     try{
       const base64 = await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(sample);});
-      const resp=await fetch("/api/elevenlabs/clone",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:voiceName.trim(),description:voiceDescription.trim(),sampleBase64:base64,fileName:sample.name,consent:true})});
+      const {data:sessionData}=await supabase.auth.getSession();
+      const token=sessionData?.session?.access_token;
+      if(!token) throw new Error("Please sign in again before creating a voice clone.");
+      const resp=await fetch("/api/elevenlabs/clone",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({name:voiceName.trim(),description:voiceDescription.trim(),sampleBase64:base64,fileName:sample.name,consent:true})});
       const data=await resp.json();
       if(!resp.ok) throw new Error(data.error||"Voice cloning failed.");
       const row={public_voice_id:idFor(voiceName),name:voiceName.trim(),language:voiceLanguage,profile_type:"Clone",description:voiceDescription.trim(),status:"active",owner_id:ownerId,provider:"elevenlabs",provider_voice_id:data.voice_id,consent_confirmed:true,created_by:session.user.id,visibility:publishConsent?"public":"private",public_listing_consent:publishConsent,public_listing_consent_at:publishConsent?new Date().toISOString():null,owner_payout_percent:30};
