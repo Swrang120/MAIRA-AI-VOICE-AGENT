@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Activity, AudioLines, BadgeCheck, Bot, ChevronDown, CircleHelp, Clock3, Copy, Crown, Download, Headphones, LayoutDashboard, LockKeyhole, Menu, Mic2, Plus, Radio, Search, Settings2, ShieldCheck, Sparkles, SquarePlay, Trash2, Upload, Users, Volume2, WandSparkles, X } from "lucide-react";
 import "./style.css";
+import { supabase, supabaseConfigured } from "./lib/supabaseClient";
 
 const initialVoices = [
   { id: "MR-EN-0001", name: "Maira Studio", language: "English", type: "Studio", status: "Active", description: "Clear, friendly studio voice", createdAt: "Built-in" },
@@ -117,4 +118,73 @@ function VoiceTable({voices,onRemove,detailed=false,admin=false,onStatus}){if(!v
 function Empty({icon:Icon,title,desc,action,onClick}){return <div className="empty-state"><div className="empty-icon"><Icon size={26}/></div><h3>{title}</h3><p>{desc}</p>{action&&<button className="btn-primary" onClick={onClick}><Plus size={16}/>{action}</button>}</div>}
 function ComingSoon({icon:Icon,title,desc,points}){return <div className="coming-panel panel"><div className="coming-icon"><Icon size={29}/></div><span className="preview-label">PLANNED MODULE</span><h2>{title}</h2><p>{desc}</p><div className="coming-points">{points.map(p=><div key={p}><BadgeCheck size={17}/>{p}</div>)}</div><div className="hint-card"><Sparkles size={18}/><div><b>Designed for the next integration phase</b><p>We will connect this module to the database and provider after core voice management is ready.</p></div></div></div>}
 function Modal({title,subtitle,onClose,children}){return <div className="modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><div className="modal"><div className="modal-head"><div><h2>{title}</h2><p>{subtitle}</p></div><button className="icon-button" onClick={onClose}><X size={18}/></button></div>{children}</div></div>}
-createRoot(document.getElementById("root")).render(<App/>);
+
+function AuthGate({ children }) {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState("google");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  useEffect(() => {
+    if (!supabaseConfigured || !supabase) { setLoading(false); return; }
+    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setLoading(false); });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession));
+    return () => listener.subscription.unsubscribe();
+  }, []);
+  const run = async (action) => {
+    setBusy(true); setMessage("");
+    try { await action(); }
+    catch (error) { setMessage(error?.message || "Login failed. Please try again."); }
+    finally { setBusy(false); }
+  };
+  const googleLogin = () => run(async () => {
+    if (!supabaseConfigured || !supabase) throw new Error("Supabase client is not configured. Check Vercel environment variables.");
+    const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
+    if (error) throw error;
+  });
+  const sendOtp = () => run(async () => {
+    if (!supabaseConfigured || !supabase) throw new Error("Supabase client is not configured.");
+    const isPhone = mode === "phone";
+    const target = isPhone ? phone.trim() : email.trim();
+    if (!target) throw new Error(isPhone ? "Enter your phone number with country code, e.g. +91..." : "Enter your email address.");
+    const { error } = await supabase.auth.signInWithOtp(isPhone ? { phone: target } : { email: target, options: { shouldCreateUser: true } });
+    if (error) throw error;
+    setOtpSent(true); setMessage("OTP sent. Check your " + (isPhone ? "SMS messages." : "email inbox/spam folder."));
+  });
+  const verifyOtp = () => run(async () => {
+    const isPhone = mode === "phone";
+    const { error } = await supabase.auth.verifyOtp(isPhone ? { phone: phone.trim(), token: otp.trim(), type: "sms" } : { email: email.trim(), token: otp.trim(), type: "email" });
+    if (error) throw error;
+  });
+  const passwordLogin = () => run(async () => {
+    if (!email.trim() || !password) throw new Error("Enter your email and password.");
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) throw error;
+  });
+  const logout = () => run(async () => { const { error } = await supabase.auth.signOut(); if (error) throw error; });
+  if (loading) return <div className="maira-auth-screen"><div className="maira-auth-card"><div className="maira-auth-logo">M</div><h1>MAIRA<span>.</span></h1><p>Checking your secure session…</p></div></div>;
+  if (!session) return <div className="maira-auth-screen"><div className="maira-auth-card">
+    <div className="maira-auth-logo"><AudioLines size={30}/></div><div className="maira-auth-kicker">YOUR VOICE. YOUR IDENTITY.</div><h1>Welcome to <span>MAIRA</span></h1><p className="maira-auth-subtitle">Sign in securely to open your AI Voice Studio.</p>
+    {!supabaseConfigured && <div className="maira-auth-alert">Supabase environment variables are missing in this deployment.</div>}
+    <button className="maira-google-button" onClick={googleLogin} disabled={busy || !supabaseConfigured}><b>G</b> Continue with Google</button>
+    <div className="maira-auth-divider"><span>or continue with</span></div>
+    <div className="maira-auth-tabs"><button className={mode==="email"?"active":""} onClick={()=>{setMode("email");setOtpSent(false);setMessage("");}}>Email OTP</button><button className={mode==="phone"?"active":""} onClick={()=>{setMode("phone");setOtpSent(false);setMessage("");}}>Mobile OTP</button><button className={mode==="password"?"active":""} onClick={()=>{setMode("password");setOtpSent(false);setMessage("");}}>Password</button></div>
+    {(mode==="email" || mode==="password") && <label className="maira-auth-label">GMAIL / EMAIL ADDRESS<input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email"/></label>}
+    {mode==="phone" && <label className="maira-auth-label">MOBILE NUMBER<input type="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+91 98765 43210" autoComplete="tel"/></label>}
+    {mode==="password" && <label className="maira-auth-label">PASSWORD<input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Enter your password" autoComplete="current-password"/></label>}
+    {(mode==="email" || mode==="phone") && otpSent && <label className="maira-auth-label">ONE-TIME PASSWORD (OTP)<input inputMode="numeric" value={otp} onChange={e=>setOtp(e.target.value)} placeholder="Enter OTP" autoComplete="one-time-code"/></label>}
+    {mode==="email" && <button className="maira-auth-submit" disabled={busy} onClick={otpSent?verifyOtp:sendOtp}>{busy?"Please wait…":otpSent?"Verify email OTP":"Send email OTP"}</button>}
+    {mode==="phone" && <button className="maira-auth-submit" disabled={busy} onClick={otpSent?verifyOtp:sendOtp}>{busy?"Please wait…":otpSent?"Verify mobile OTP":"Send mobile OTP"}</button>}
+    {mode==="password" && <button className="maira-auth-submit" disabled={busy} onClick={passwordLogin}>{busy?"Please wait…":"Sign in with password"}</button>}
+    {message && <div className={message.startsWith("OTP sent")?"maira-auth-success":"maira-auth-alert"}>{message}</div>}
+    <small className="maira-auth-foot">By continuing, you agree to use MAIRA responsibly. Mobile OTP requires an SMS provider configured in Supabase.</small>
+  </div></div>;
+  return <>{children}<button className="maira-logout-button" onClick={logout} disabled={busy}>{busy?"Please wait…":"Sign out"}</button></>;
+}
+
+createRoot(document.getElementById("root")).render(<AuthGate><App/></AuthGate>);
