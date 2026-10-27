@@ -44,6 +44,8 @@ function App() {
   const [audioUrl, setAudioUrl] = useState("");
   const [showVoicePicker, setShowVoicePicker] = useState(false);
   const [filter, setFilter] = useState("All");
+  const [subscriptionPlans, setSubscriptionPlans] = useState([]);
+  const [mySubscriptions, setMySubscriptions] = useState([]);
   useEffect(() => {
     if (!supabase) { setRoleLoading(false); return; }
     let alive = true;
@@ -55,6 +57,20 @@ function App() {
       const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
       if (!alive) return;
       setIsAdmin(!error && profile?.role === "admin");
+      const [voiceResult, planResult, subscriptionResult] = await Promise.all([
+        supabase.from("voice_profiles").select("*").order("created_at", { ascending: false }),
+        supabase.from("voice_subscription_plans").select("*").eq("is_active", true).order("price_inr", { ascending: true }),
+        supabase.from("voice_subscriptions").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
+      ]);
+      if (!alive) return;
+      if (!voiceResult.error) setVoices((voiceResult.data || []).map(v => ({
+        id: v.provider_voice_id ? "el:" + v.provider_voice_id : v.public_voice_id,
+        dbId: v.id, name: v.name, language: v.language, type: v.profile_type || "Custom",
+        status: v.status === "active" ? "Active" : "Inactive", description: v.description || "",
+        createdAt: v.created_at, visibility: v.visibility || "private", ownerId: v.owner_id
+      })));
+      if (!planResult.error) setSubscriptionPlans(planResult.data || []);
+      if (!subscriptionResult.error) setMySubscriptions(subscriptionResult.data || []);
       setRoleLoading(false);
     };
     supabase.auth.getUser().then(({ data }) => loadIdentity(data?.user || null)).catch(() => { if (alive) setRoleLoading(false); });
