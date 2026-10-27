@@ -1,10 +1,27 @@
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const authorization = String(req.headers.authorization || "");
+  if (!authorization.startsWith("Bearer ")) return res.status(401).json({ error: "Admin sign-in is required to create voice clones." });
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) return res.status(503).json({ error: "MAIRA database is not configured on the server." });
+  try {
+    const roleCheck = await fetch(supabaseUrl.replace(/\/$/, "") + "/rest/v1/profiles?select=role&limit=1", {
+      headers: { apikey: supabaseKey, Authorization: authorization, Accept: "application/json" }
+    });
+    const roles = await roleCheck.json().catch(() => []);
+    if (!roleCheck.ok || !Array.isArray(roles) || roles[0]?.role !== "admin") {
+      return res.status(403).json({ error: "Only an authorized MAIRA administrator can create voice clones." });
+    }
+  } catch (error) {
+    console.error("MAIRA clone authorization check failed", error);
+    return res.status(502).json({ error: "Could not verify administrator access." });
+  }
   const key = process.env.ELEVENLABS_API_KEY || process.env.ELEVENLABS_API;
-  if (!key) return res.status(503).json({ error: "ElevenLabs API key is not configured on the server." });
+  if (!key) return res.status(503).json({ error: "Voice cloning service is not configured on the server." });
   const { name, description = "", sampleBase64, fileName = "voice-sample.mp3", consent } = req.body || {};
-  if (!consent) return res.status(400).json({ error: "Confirm that you own this voice or have the speaker's permission." });
+  if (!consent) return res.status(400).json({ error: "Confirm documented permission from the voice owner." });
   if (!String(name || "").trim()) return res.status(400).json({ error: "Enter a name for this cloned voice." });
   if (!sampleBase64 || typeof sampleBase64 !== "string") return res.status(400).json({ error: "Upload a voice sample first." });
   const match = sampleBase64.match(/^data:(audio\/[A-Za-z0-9.+-]+|video\/webm|application\/octet-stream);base64,([A-Za-z0-9+/=]+)$/);
@@ -22,17 +39,17 @@ export default async function handler(req, res) {
     });
     const data = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
-      console.error("ElevenLabs clone error", upstream.status, data?.detail?.status || data?.detail?.message || "");
-      const message = upstream.status === 401 ? "ElevenLabs API key was rejected. Verify the key in Vercel." :
-        upstream.status === 402 ? "Your ElevenLabs plan or available credits do not allow this operation." :
-        upstream.status === 403 ? "Your ElevenLabs account does not have access to voice cloning." :
-        upstream.status === 422 ? "ElevenLabs could not accept this sample. Try a clear recording with one speaker." :
-        upstream.status === 429 ? "ElevenLabs rate limit reached. Try again later." : "Voice cloning failed. Check the sample and ElevenLabs account access.";
+      console.error("Voice clone provider error", upstream.status, data?.detail?.status || data?.detail?.message || "");
+      const message = upstream.status === 401 ? "Voice service credentials were rejected." :
+        upstream.status === 402 ? "Voice service plan or credits do not allow this operation." :
+        upstream.status === 403 ? "Voice cloning is not enabled for the configured account." :
+        upstream.status === 422 ? "This sample could not be accepted. Try a clear recording with one speaker." :
+        upstream.status === 429 ? "Voice service rate limit reached. Try again later." : "Voice cloning failed.";
       return res.status([401,402,403,422,429].includes(upstream.status) ? upstream.status : 502).json({ error: message });
     }
     return res.status(200).json({ voice_id: data.voice_id, name: data.name || String(name).trim(), category: data.category || "cloned" });
   } catch (error) {
-    console.error("ElevenLabs clone request failed", error);
-    return res.status(502).json({ error: "Could not connect to ElevenLabs voice cloning." });
+    console.error("Voice clone request failed", error);
+    return res.status(502).json({ error: "Could not connect to the voice cloning service." });
   }
 }
