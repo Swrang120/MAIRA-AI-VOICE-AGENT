@@ -131,18 +131,16 @@ function App() {
     notify("Browser preview started. Select a MAIRA studio voice for generated MP3 audio.");
   };
   const nav = [
-    { group:"WORKSPACE", items:[["Overview",LayoutDashboard],["Voice Studio",AudioLines],["Voice Library",Headphones],["Voice Requests",Mic2]] },
-    { group:"PLATFORM", items:[["AI Calling Agents",Radio],["Usage & Activity",Activity]] },
-    { group:"MANAGEMENT", items:[["Admin Console",ShieldCheck],["Settings",Settings2]] },
+    { group:"WORKSPACE", items:[["Overview",LayoutDashboard],["Voice Studio",AudioLines],["Voice Library",Headphones]] },
+    { group:"ACCOUNT", items:[["Usage & Activity",Activity],["Subscription",Crown],["Settings",Settings2]] },
   ];
   const pageIntro = {
     "Overview":["Your voice workspace","Create, organize and manage your voice identities."],
     "Voice Studio":["Voice Studio","Turn written scripts into audio previews."],
     "Voice Library":["Your voice library","Every voice profile has its own unique MAIRA Voice ID."],
-    "Voice Requests":["Custom voice requests","Manage submitted requests for new voice identities and authorized voice cloning."],
-    "AI Calling Agents":["AI Calling Agents","A dedicated workspace for future inbound and outbound voice agents."],
+    "Subscription":["Voice Subscription","Manage a subscription for your own MAIRA account."],
     "Usage & Activity":["Usage & Activity","Review activity and usage once the backend is connected."],
-    "Admin Console":["Admin Console","Control voice profiles, cloning requests and platform settings."],
+
     "Settings":["Workspace settings","Manage your MAIRA workspace preferences."],
   };
   return <div className="app-shell">
@@ -167,7 +165,7 @@ function App() {
   <button className="maira-profile-logout" onClick={async()=>{const {error}=await supabase.auth.signOut();if(error)setProfileNotice(error.message);}}><LogOut size={16}/> Sign out</button>
 </div>}</div></header>
       <div className="content">
-        <div className="page-heading"><div><div className="eyebrow"><Sparkles size={14}/> MAIRA VOICE INTELLIGENCE</div><h1>{pageIntro[section]?.[0]}</h1><p>{pageIntro[section]?.[1]}</p></div><div className="heading-actions">{isAdmin&&<span className="admin-badge"><ShieldCheck size={14}/> Admin preview</span>}{(section==="Voice Library"||section==="Admin Console")&&<button className="btn-primary" onClick={()=>setShowAddVoice(true)}><Plus size={17}/> Add voice</button>}</div></div>
+        <div className="page-heading"><div><div className="eyebrow"><Sparkles size={14}/> MAIRA VOICE INTELLIGENCE</div><h1>{pageIntro[section]?.[0]}</h1><p>{pageIntro[section]?.[1]}</p></div><div className="heading-actions">{isAdmin&&<a className="btn-secondary" href="/admin.html" style={{textDecoration:"none"}}><ShieldCheck size={15}/> Admin Control Center</a>}</div></div>
         {section==="Overview"&&<><section className="hero-banner"><div className="hero-copy"><div className="hero-tag"><span className="pulse-dot"/> YOUR VOICE. YOUR IDENTITY.</div><h2>Give every idea<br/>a <span>voice of its own.</span></h2><p>Build a curated library of voice identities, preview scripts, and organize custom voice requests from one premium workspace.</p><div className="hero-buttons"><button className="btn-primary" onClick={()=>setSection("Voice Studio")}><WandSparkles size={17}/> Open Voice Studio</button><button className="btn-glass" onClick={()=>setShowClone(true)}><Mic2 size={17}/> Request voice clone</button></div><div className="hero-foot"><ShieldCheck size={15}/> Voice cloning is for voices you own or have explicit permission to use.</div></div><div className="hero-visual"><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="voice-orb"><AudioLines size={54}/></div><div className="floating-chip chip-one"><span className="mini-wave">▂▅▇▃▆▂</span><div><b>Voice identity</b><small>Unique ID assigned</small></div></div><div className="floating-chip chip-two"><BadgeCheck size={19}/><div><b>Admin controlled</b><small>Library management</small></div></div><div className="visual-caption">SOUND THAT FEELS LIKE YOU <span>✦</span></div></div></section>
           <div className="stats-grid"><Stat icon={Headphones} label="Voice profiles" value={voices.length} detail="In your library" /><Stat icon={BadgeCheck} label="Active voices" value={activeVoices.length} detail="Ready profiles" /><Stat icon={Mic2} label="Clone requests" value={requests.length} detail="Submitted requests" /><Stat icon={Activity} label="Studio status" value="Preview" detail="Voice API not connected" /></div>
           <div className="section-row"><div><h2>Quick actions</h2><p>Jump straight into your workflow.</p></div><button className="text-link" onClick={()=>setSection("Voice Library")}>View all voices <span>→</span></button></div>
