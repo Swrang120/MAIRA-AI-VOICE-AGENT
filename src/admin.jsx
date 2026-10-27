@@ -14,7 +14,7 @@ function AdminApp() {
   const [session,setSession] = useState(null);
   const [authLoading,setAuthLoading] = useState(true);
   const [role,setRole] = useState("");
-  const [loginMode,setLoginMode] = useState("google");
+  const [loginMode,setLoginMode] = useState("password");
   const [email,setEmail] = useState("");
   const [password,setPassword] = useState("");
   const [busy,setBusy] = useState(false);
@@ -85,14 +85,9 @@ function AdminApp() {
     if (!supabase) return flash("Supabase environment is not configured.");
     setBusy(true);
     try {
-      if(loginMode==="google"){
-        const {error}=await supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin+"/admin.html"}});
-        if(error) throw error;
-      } else {
-        if(!email.trim()||!password) throw new Error("Enter the admin email and password.");
-        const {error}=await supabase.auth.signInWithPassword({email:email.trim(),password});
-        if(error) throw error;
-      }
+      if(!email.trim()||!password) throw new Error("Enter the admin email and password.");
+      const {error}=await supabase.auth.signInWithPassword({email:email.trim(),password});
+      if(error) throw error;
     } catch(e){flash(e.message||"Sign-in failed.");}
     finally{setBusy(false);}
   };
@@ -140,7 +135,7 @@ function AdminApp() {
   const signOut = async()=>{await supabase?.auth.signOut();window.location.href="/admin.html";};
 
   if(authLoading) return <div className="admin-loading"><div className="admin-logo">M</div><h1>MAIRA Admin</h1><p>Checking secure access…</p></div>;
-  if(!session) return <div className="admin-auth-wrap"><div className="admin-auth-card"><div className="admin-logo"><AudioLines/></div><div className="admin-kicker">RESTRICTED CONTROL CENTER</div><h1>MAIRA <span>Admin</span></h1><p>Sign in with an account that has the administrator role.</p>{!supabaseConfigured&&<div className="admin-alert">Supabase environment variables are missing.</div>}<div className="admin-auth-tabs"><button className={loginMode==="google"?"active":""} onClick={()=>setLoginMode("google")}>Google</button><button className={loginMode==="password"?"active":""} onClick={()=>setLoginMode("password")}>Email + Password</button></div>{loginMode==="password"&&<><label>Email<input value={email} type="email" onChange={e=>setEmail(e.target.value)} placeholder="admin@example.com"/></label><label>Password<input value={password} type="password" onChange={e=>setPassword(e.target.value)}/></label></>}<button className="admin-primary wide" disabled={busy||!supabaseConfigured} onClick={signIn}>{busy?"Please wait…":loginMode==="google"?"Continue with Google":"Sign in securely"}</button><a className="admin-back" href="/">← Back to MAIRA Voice Studio</a>{notice&&<div className="admin-alert">{notice}</div>}</div></div>;
+  if(!session) return <div className="admin-auth-wrap"><div className="admin-auth-card"><div className="admin-logo"><AudioLines/></div><div className="admin-kicker">RESTRICTED CONTROL CENTER</div><h1>MAIRA <span>Admin</span></h1><p>Sign in with an account that has the administrator role.</p>{!supabaseConfigured&&<div className="admin-alert">Supabase environment variables are missing.</div>}<div className="admin-auth-tabs"><button className="active" type="button">Email + Password</button></div>{loginMode==="password"&&<><label>Email<input value={email} type="email" onChange={e=>setEmail(e.target.value)} placeholder="admin@example.com"/></label><label>Password<input value={password} type="password" onChange={e=>setPassword(e.target.value)}/></label></>}<button className="admin-primary wide" disabled={busy||!supabaseConfigured} onClick={signIn}>{busy?"Please wait…":"Sign in securely"}</button><a className="admin-back" href="/">← Back to MAIRA Voice Studio</a>{notice&&<div className="admin-alert">{notice}</div>}</div></div>;
   if(role!=="admin") return <div className="admin-auth-wrap"><div className="admin-auth-card"><div className="admin-logo"><ShieldCheck/></div><div className="admin-kicker">ACCESS RESTRICTED</div><h1>Admin access required</h1><p>This account does not have the MAIRA administrator role. The admin panel is not available to regular users.</p><button className="admin-primary wide" onClick={signOut}>Sign out</button><a className="admin-back" href="/">Open user website</a></div></div>;
 
   const pending=requests.filter(r=>["pending_review","approved","in_progress"].includes(r.status)).length;
