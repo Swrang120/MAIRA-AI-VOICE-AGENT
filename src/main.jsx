@@ -24,6 +24,7 @@ function App() {
   const [voices, setVoices] = useState(() => { try { return JSON.parse(localStorage.getItem("maira_voices")) || initialVoices; } catch { return initialVoices; } });
   const [requests, setRequests] = useState(() => { try { return JSON.parse(localStorage.getItem("maira_requests")) || []; } catch { return []; } });
   const [isAdmin, setIsAdmin] = useState(false);
+  const [roleLoading, setRoleLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [text, setText] = useState("Welcome to MAIRA AI Voice Studio. Your ideas, spoken naturally.");
   const [selectedVoice, setSelectedVoice] = useState("MR-EN-0001");
@@ -44,18 +45,21 @@ function App() {
   const [showVoicePicker, setShowVoicePicker] = useState(false);
   const [filter, setFilter] = useState("All");
   useEffect(() => {
-    if (!supabase) return;
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data?.user || null;
-      setAccountUser(user);
+    if (!supabase) { setRoleLoading(false); return; }
+    let alive = true;
+    const loadIdentity = async (user) => {
+      if (!alive) return;
+      setAccountUser(user || null);
       setProfileName(user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "");
-    }).catch(() => {});
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      const user = session?.user || null;
-      setAccountUser(user);
-      setProfileName(user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "");
-    });
-    return () => listener.subscription.unsubscribe();
+      if (!user) { setIsAdmin(false); setRoleLoading(false); return; }
+      const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+      if (!alive) return;
+      setIsAdmin(!error && profile?.role === "admin");
+      setRoleLoading(false);
+    };
+    supabase.auth.getUser().then(({ data }) => loadIdentity(data?.user || null)).catch(() => { if (alive) setRoleLoading(false); });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => { loadIdentity(session?.user || null); });
+    return () => { alive = false; listener.subscription.unsubscribe(); };
   }, []);
   const saveProfileName = async () => {
     const cleanName = profileName.trim();
@@ -146,7 +150,7 @@ function App() {
       <div className="brand"><div className="brand-mark"><AudioLines size={23}/></div><div><strong>MAIRA<span>.</span></strong><small>AI VOICE STUDIO</small></div><button className="mobile-close" onClick={()=>setMobileMenu(false)}><X size={18}/></button></div>
       <div className="workspace-switch"><div className="workspace-icon">M</div><div><b>My Workspace</b><small>Free workspace</small></div><ChevronDown size={15}/></div>
       {nav.map(g=><div className="nav-group" key={g.group}><div className="nav-label">{g.group}</div>{g.items.map(([name,Icon])=><button key={name} className={`nav-item ${section===name?"selected":""}`} onClick={()=>{setSection(name);setMobileMenu(false)}}><Icon size={18}/><span>{name}</span>{name==="Voice Requests"&&requests.length>0&&<em>{requests.length}</em>}</button>)}</div>)}
-      <div className="sidebar-bottom"><div className="upgrade-card"><div className="upgrade-icon"><Crown size={17}/></div><b>Build your voice brand</b><p>Manage unique voice IDs in one place.</p><button onClick={()=>setSection("Voice Library")}>Explore voice library <span>↗</span></button></div><div className="profile"><div className="avatar">S</div><div className="profile-text"><b>Workspace Owner</b><small>{isAdmin?"Admin preview mode":"Member preview"}</small></div><button title="Toggle demo admin" onClick={()=>{setIsAdmin(v=>!v);notify(isAdmin?"Admin preview disabled":"Admin preview enabled — demo only");}}><Settings2 size={17}/></button></div></div>
+      <div className="sidebar-bottom"><div className="upgrade-card"><div className="upgrade-icon"><Crown size={17}/></div><b>Build your voice brand</b><p>Manage unique voice IDs in one place.</p><button onClick={()=>setSection("Voice Library")}>Explore voice library <span>↗</span></button></div><div className="profile"><div className="avatar">S</div><div className="profile-text"><b>Workspace Owner</b><small>{isAdmin?"Admin preview mode":"Member preview"}</small></div><span className="profile-role-label">{roleLoading ? "Checking access…" : isAdmin ? "Admin access" : "Member account"}</span></div></div>
     </aside>
     {mobileMenu&&<div className="scrim" onClick={()=>setMobileMenu(false)}/>}
     <main className="main">
