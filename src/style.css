@@ -24,3 +24,22 @@
 .maira-auth-foot{display:block;margin-top:20px;color:#777185;font-size:10px;line-height:1.6}
 .maira-logout-button{position:fixed;right:18px;top:16px;z-index:10000;padding:10px 14px;border-radius:10px;border:1px solid rgba(217,179,107,.35);background:#191522;color:#e7c67e;font-weight:700;cursor:pointer}
 @media(max-width:520px){.maira-auth-card{padding:25px 20px}.maira-auth-card h1{font-size:26px}.maira-logout-button{right:10px;top:10px;padding:8px 10px;font-size:12px}}
+
+
+/* Account profile, Google identity, editable display name, plan and coins */
+.top-actions{position:relative}
+.maira-profile-trigger{border:1px solid rgba(217,179,107,.5);cursor:pointer;font-weight:800}
+.maira-profile-popover{position:absolute;right:0;top:48px;width:min(360px,calc(100vw - 32px));z-index:12000;padding:18px;border:1px solid rgba(217,179,107,.28);border-radius:18px;background:#171321;box-shadow:0 24px 70px rgba(0,0,0,.48);color:#f7f3ff}
+.maira-profile-head{display:flex;align-items:center;gap:11px;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,.08)}
+.maira-profile-avatar{flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,#dfbd72,#8d62c7);color:#20152b;font-size:20px;font-weight:900}
+.maira-profile-ident{min-width:0;flex:1}.maira-profile-ident b,.maira-profile-ident small{display:block;overflow-wrap:anywhere}.maira-profile-ident b{font-size:14px}.maira-profile-ident small{font-size:11px;color:#aaa4bb;margin-top:4px}
+.maira-profile-close{background:transparent;color:#aaa4bb;border:0;padding:5px;cursor:pointer}
+.maira-profile-google{display:flex;gap:10px;align-items:center;margin:15px 0;padding:11px;border-radius:11px;background:rgba(255,255,255,.035);color:#e3c47c}.maira-profile-google div{min-width:0}.maira-profile-google small,.maira-profile-google b{display:block}.maira-profile-google small{font-size:9px;letter-spacing:1px;color:#9d96ae}.maira-profile-google b{font-size:11px;overflow-wrap:anywhere;color:#f1edf8;margin-top:4px}
+.maira-profile-label{display:block;font-size:10px;letter-spacing:.8px;color:#aaa4bb;font-weight:800}.maira-profile-label input{box-sizing:border-box;width:100%;margin-top:7px;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.13);background:#100e19;color:#fff;font-size:13px;outline:none}.maira-profile-label input:focus{border-color:#d9b36b}
+.maira-profile-save,.maira-profile-settings,.maira-profile-logout{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;margin-top:10px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:750}
+.maira-profile-save{border:0;background:linear-gradient(110deg,#d7b46e,#b88b46);color:#1a1420}.maira-profile-settings{border:1px solid rgba(255,255,255,.12);background:transparent;color:#e8e2f4}.maira-profile-logout{border:1px solid rgba(220,95,95,.25);background:rgba(190,72,72,.08);color:#ffb6b6}
+.maira-profile-message,.maira-profile-success{font-size:11px;margin-top:9px;line-height:1.4}.maira-profile-message{color:#ffb6b6}.maira-profile-success{color:#a4f0c4}
+.maira-profile-divider{height:1px;background:rgba(255,255,255,.08);margin:16px 0}
+.maira-profile-plan{display:flex;align-items:center;gap:10px}.maira-plan-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(217,179,107,.12);color:#e4c47c}.maira-profile-plan>div:nth-child(2){flex:1}.maira-profile-plan b,.maira-profile-plan small{display:block}.maira-profile-plan b{font-size:12px}.maira-profile-plan small{font-size:10px;color:#9d96ae;margin-top:3px}.maira-profile-plan>span{font-size:9px;font-weight:900;letter-spacing:1px;color:#e4c47c;border:1px solid rgba(217,179,107,.3);padding:5px 7px;border-radius:7px}
+.maira-profile-coins{display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:12px;border-radius:11px;background:rgba(140,99,196,.09);color:#dfc17b}.maira-profile-coins b,.maira-profile-coins small{display:block}.maira-profile-coins b{font-size:12px;color:#f5efff}.maira-profile-coins small{font-size:10px;line-height:1.45;color:#9d96ae;margin-top:4px}
+@media(max-width:520px){.maira-profile-popover{position:fixed;right:12px;top:74px;width:calc(100vw - 24px);box-sizing:border-box}}
