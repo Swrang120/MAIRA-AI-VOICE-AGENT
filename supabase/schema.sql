@@ -67,6 +67,7 @@ create policy "Users read own clone requests" on public.voice_clone_requests for
 
 -- MAIRA private-by-default library, opt-in public marketplace, subscriptions and creator share.
 alter table public.voice_profiles
+  add column if not exists gender text not null default 'Not specified',
   add column if not exists visibility text not null default 'private' check (visibility in ('private','public')),
   add column if not exists public_listing_consent boolean not null default false,
   add column if not exists public_listing_consent_at timestamptz,
