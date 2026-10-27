@@ -7,7 +7,13 @@ export default async function handler(req, res) {
   const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseKey) return res.status(503).json({ error: "MAIRA database is not configured on the server." });
   try {
-    const roleCheck = await fetch(supabaseUrl.replace(/\/$/, "") + "/rest/v1/profiles?select=role&limit=1", {
+    const baseUrl = supabaseUrl.replace(/\/$/, "");
+    const identityResponse = await fetch(baseUrl + "/auth/v1/user", {
+      headers: { apikey: supabaseKey, Authorization: authorization, Accept: "application/json" }
+    });
+    const identity = await identityResponse.json().catch(() => ({}));
+    if (!identityResponse.ok || !identity.id) return res.status(401).json({ error: "Sign in again to verify administrator access." });
+    const roleCheck = await fetch(baseUrl + "/rest/v1/profiles?select=role&id=eq." + encodeURIComponent(identity.id) + "&limit=1", {
       headers: { apikey: supabaseKey, Authorization: authorization, Accept: "application/json" }
     });
     const roles = await roleCheck.json().catch(() => []);
