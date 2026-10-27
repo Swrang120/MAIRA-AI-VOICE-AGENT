@@ -43,3 +43,12 @@
 .maira-profile-plan{display:flex;align-items:center;gap:10px}.maira-plan-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(217,179,107,.12);color:#e4c47c}.maira-profile-plan>div:nth-child(2){flex:1}.maira-profile-plan b,.maira-profile-plan small{display:block}.maira-profile-plan b{font-size:12px}.maira-profile-plan small{font-size:10px;color:#9d96ae;margin-top:3px}.maira-profile-plan>span{font-size:9px;font-weight:900;letter-spacing:1px;color:#e4c47c;border:1px solid rgba(217,179,107,.3);padding:5px 7px;border-radius:7px}
 .maira-profile-coins{display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:12px;border-radius:11px;background:rgba(140,99,196,.09);color:#dfc17b}.maira-profile-coins b,.maira-profile-coins small{display:block}.maira-profile-coins b{font-size:12px;color:#f5efff}.maira-profile-coins small{font-size:10px;line-height:1.45;color:#9d96ae;margin-top:4px}
 @media(max-width:520px){.maira-profile-popover{position:fixed;right:12px;top:74px;width:calc(100vw - 24px);box-sizing:border-box}}
+
+
+/* Make the account entry point clearly visible on desktop and mobile */
+.top-actions{position:relative;display:flex;align-items:center;gap:10px}
+.maira-profile-trigger{display:inline-flex!important;align-items:center;justify-content:center;gap:8px;min-width:94px;height:38px;padding:4px 10px!important;border:1px solid rgba(217,179,107,.55)!important;border-radius:999px!important;background:rgba(217,179,107,.10)!important;color:#f2d38a!important;cursor:pointer;font-size:12px;font-weight:800;line-height:1;white-space:nowrap;visibility:visible!important;opacity:1!important}
+.maira-profile-trigger-avatar{display:grid;place-items:center;width:27px;height:27px;flex:0 0 27px;border-radius:50%;background:linear-gradient(135deg,#dfbd72,#8d62c7);color:#20152b;font-size:13px;font-weight:900}
+.maira-profile-trigger-label{display:inline-block!important;color:#f2d38a!important}
+.maira-profile-trigger svg{display:block;flex:0 0 auto}
+@media(max-width:520px){.top-actions{gap:6px}.maira-profile-trigger{min-width:38px;width:38px;height:38px;padding:4px!important;gap:0}.maira-profile-trigger-label,.maira-profile-trigger>svg{display:none!important}.maira-profile-trigger-avatar{width:28px;height:28px;flex-basis:28px}}
