@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Activity, AudioLines, BadgeCheck, Bot, ChevronDown, CircleHelp, Clock3, Copy, Crown, Download, Headphones, LayoutDashboard, LockKeyhole, Menu, Mic2, Plus, Radio, Search, Settings2, ShieldCheck, Sparkles, SquarePlay, Trash2, Upload, Users, Volume2, WandSparkles, X } from "lucide-react";
+import { Activity, AudioLines, BadgeCheck, Bot, ChevronDown, CircleHelp, Clock3, Coins, Copy, Crown, CreditCard, Download, Headphones, LayoutDashboard, LockKeyhole, LogOut, Mail, Menu, Mic2, Plus, Radio, Search, Settings2, ShieldCheck, Sparkles, SquarePlay, Trash2, Upload, UserRound, Users, Volume2, WandSparkles, X } from "lucide-react";
 import "./style.css";
 import { supabase, supabaseConfigured } from "./lib/supabaseClient";
 
@@ -14,6 +14,11 @@ const makeId = (name, count) => {
   return `MR-${prefix}-${String(count).padStart(4, "0")}`;
 };
 function App() {
+  const [accountUser, setAccountUser] = useState(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileNotice, setProfileNotice] = useState("");
   const [section, setSection] = useState("Overview");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [voices, setVoices] = useState(() => { try { return JSON.parse(localStorage.getItem("maira_voices")) || initialVoices; } catch { return initialVoices; } });
@@ -34,6 +39,36 @@ function App() {
   const [notice, setNotice] = useState("");
   const [generating, setGenerating] = useState(false);
   const [filter, setFilter] = useState("All");
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data }) => {
+      const user = data?.user || null;
+      setAccountUser(user);
+      setProfileName(user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "");
+    }).catch(() => {});
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user || null;
+      setAccountUser(user);
+      setProfileName(user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "");
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+  const saveProfileName = async () => {
+    const cleanName = profileName.trim();
+    if (!cleanName) { setProfileNotice("Please enter a display name."); return; }
+    if (!supabase || !accountUser) { setProfileNotice("Your account session is not ready. Please sign in again."); return; }
+    setProfileSaving(true); setProfileNotice("");
+    const { data, error } = await supabase.auth.updateUser({ data: { display_name: cleanName } });
+    setProfileSaving(false);
+    if (error) { setProfileNotice(error.message); return; }
+    setAccountUser(data.user);
+    setProfileName(data.user?.user_metadata?.display_name || cleanName);
+    setProfileNotice("Profile name saved successfully.");
+  };
+  const userEmail = accountUser?.email || accountUser?.phone || "Account details unavailable";
+  const googleName = accountUser?.user_metadata?.full_name || accountUser?.user_metadata?.name || accountUser?.email?.split("@")[0] || "Maira User";
+  const displayName = accountUser?.user_metadata?.display_name || googleName;
+  const avatarLetter = (displayName.trim()[0] || userEmail[0] || "M").toUpperCase();
   useEffect(() => localStorage.setItem("maira_voices", JSON.stringify(voices)), [voices]);
   useEffect(() => localStorage.setItem("maira_requests", JSON.stringify(requests)), [requests]);
   const activeVoices = voices.filter(v => v.status === "Active");
@@ -89,7 +124,18 @@ function App() {
     </aside>
     {mobileMenu&&<div className="scrim" onClick={()=>setMobileMenu(false)}/>}
     <main className="main">
-      <header className="topbar"><div className="top-left"><button className="menu-button" onClick={()=>setMobileMenu(true)}><Menu/></button><div className="breadcrumbs">Workspace <span>/</span> <b>{section}</b></div></div><div className="top-actions"><div className="status-pill"><span/> All systems preview</div><button className="icon-button" title="Help" onClick={()=>notify("Backend setup guide: connect Supabase Auth, database and a licensed voice API.")}><CircleHelp size={18}/></button><div className="top-avatar">S</div></div></header>
+      <header className="topbar"><div className="top-left"><button className="menu-button" onClick={()=>setMobileMenu(true)}><Menu/></button><div className="breadcrumbs">Workspace <span>/</span> <b>{section}</b></div></div><div className="top-actions"><div className="status-pill"><span/> All systems preview</div><button className="icon-button" title="Help" onClick={()=>notify("Backend setup guide: connect Supabase Auth, database and a licensed voice API.")}><CircleHelp size={18}/></button><button className="top-avatar maira-profile-trigger" title="Open profile" onClick={() => { setProfileOpen(v => !v); setProfileNotice(""); }} aria-label="Open profile">{avatarLetter}</button>{profileOpen && <div className="maira-profile-popover">
+  <div className="maira-profile-head"><div className="maira-profile-avatar">{avatarLetter}</div><div className="maira-profile-ident"><b>{displayName}</b><small>{userEmail}</small></div><button className="maira-profile-close" onClick={() => setProfileOpen(false)} aria-label="Close profile"><X size={16}/></button></div>
+  <div className="maira-profile-google"><Mail size={16}/><div><small>LINKED EMAIL / LOGIN</small><b>{userEmail}</b></div></div>
+  <label className="maira-profile-label">CUSTOM DISPLAY NAME<input value={profileName} onChange={e=>setProfileName(e.target.value)} placeholder={googleName} maxLength={60}/></label>
+  <button className="maira-profile-save" onClick={saveProfileName} disabled={profileSaving}>{profileSaving?"Saving…":"Save profile name"}</button>
+  {profileNotice && <div className={profileNotice.includes("successfully")?"maira-profile-success":"maira-profile-message"}>{profileNotice}</div>}
+  <div className="maira-profile-divider"/>
+  <div className="maira-profile-plan"><div className="maira-plan-icon"><Crown size={17}/></div><div><b>Free Subscription</b><small>Current plan · billing not connected</small></div><span>FREE</span></div>
+  <div className="maira-profile-coins"><Coins size={17}/><div><b>0 Coins</b><small>Coin wallet will appear here when wallet billing is connected.</small></div></div>
+  <button className="maira-profile-settings" onClick={()=>{setSection("Settings");setProfileOpen(false);}}><UserRound size={16}/> Account settings</button>
+  <button className="maira-profile-logout" onClick={async()=>{const {error}=await supabase.auth.signOut();if(error)setProfileNotice(error.message);}}><LogOut size={16}/> Sign out</button>
+</div>}</div></header>
       <div className="content">
         <div className="page-heading"><div><div className="eyebrow"><Sparkles size={14}/> MAIRA VOICE INTELLIGENCE</div><h1>{pageIntro[section]?.[0]}</h1><p>{pageIntro[section]?.[1]}</p></div><div className="heading-actions">{isAdmin&&<span className="admin-badge"><ShieldCheck size={14}/> Admin preview</span>}{(section==="Voice Library"||section==="Admin Console")&&<button className="btn-primary" onClick={()=>setShowAddVoice(true)}><Plus size={17}/> Add voice</button>}</div></div>
         {section==="Overview"&&<><section className="hero-banner"><div className="hero-copy"><div className="hero-tag"><span className="pulse-dot"/> YOUR VOICE. YOUR IDENTITY.</div><h2>Give every idea<br/>a <span>voice of its own.</span></h2><p>Build a curated library of voice identities, preview scripts, and organize custom voice requests from one premium workspace.</p><div className="hero-buttons"><button className="btn-primary" onClick={()=>setSection("Voice Studio")}><WandSparkles size={17}/> Open Voice Studio</button><button className="btn-glass" onClick={()=>setShowClone(true)}><Mic2 size={17}/> Request voice clone</button></div><div className="hero-foot"><ShieldCheck size={15}/> Voice cloning is for voices you own or have explicit permission to use.</div></div><div className="hero-visual"><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="voice-orb"><AudioLines size={54}/></div><div className="floating-chip chip-one"><span className="mini-wave">▂▅▇▃▆▂</span><div><b>Voice identity</b><small>Unique ID assigned</small></div></div><div className="floating-chip chip-two"><BadgeCheck size={19}/><div><b>Admin controlled</b><small>Library management</small></div></div><div className="visual-caption">SOUND THAT FEELS LIKE YOU <span>✦</span></div></div></section>
