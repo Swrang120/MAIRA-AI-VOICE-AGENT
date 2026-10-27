@@ -92,3 +92,20 @@
 .voice-use-button:hover{background:rgba(130,88,177,.24)}
 .voice-use-button.selected{border-color:rgba(215,180,110,.5);background:rgba(215,180,110,.12);color:#efd18b}
 @media(max-width:600px){.voice-gallery-section{padding:11px}.voice-gallery-grid{grid-template-columns:1fr}.voice-gallery-card{padding:12px}.voice-gallery-heading b{font-size:13px}}
+
+
+/* Custom voice picker modal replaces the mobile browser-native select menu */
+.voice-picker-summary{display:flex;align-items:center;gap:13px;margin:9px 0 14px;padding:13px;border:1px solid rgba(217,179,107,.24);border-radius:13px;background:linear-gradient(115deg,rgba(126,86,170,.15),rgba(20,15,31,.9))}
+.voice-picker-summary-info{display:flex;flex:1;min-width:0;flex-direction:column;gap:5px}
+.voice-picker-summary-info b{font:800 13px Manrope,sans-serif;color:#f5ecff}
+.voice-picker-summary-info small{font-size:10px;line-height:1.5;color:#a99bbd}
+.voice-browse-button{white-space:nowrap;display:flex;align-items:center;gap:7px}
+.voice-picker-overlay{position:fixed;inset:0;z-index:15000;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(5,3,10,.84);backdrop-filter:blur(10px)}
+.voice-picker-modal{width:min(980px,100%);max-height:min(90vh,900px);overflow:auto;border:1px solid rgba(217,179,107,.3);border-radius:20px;background:#100d18;box-shadow:0 30px 100px #000b;padding:20px}
+.voice-picker-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:16px}
+.voice-picker-modal-head h2{font:800 22px Manrope,sans-serif;color:#f7f0ff;margin:7px 0 5px}
+.voice-picker-modal-head p{font-size:11px;line-height:1.5;color:#a99cbd;margin:0}
+.voice-picker-modal .voice-gallery-section{margin-top:0;background:transparent;border:0;padding:0}
+.voice-picker-modal .voice-gallery-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.voice-picker-modal-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:17px;padding-top:14px;border-top:1px solid #ffffff12;color:#9b8eae;font-size:10px}
+@media(max-width:700px){.voice-picker-overlay{padding:0;align-items:stretch}.voice-picker-modal{width:100%;max-height:100dvh;box-sizing:border-box;border-radius:0;padding:17px 13px}.voice-picker-modal-head h2{font-size:19px}.voice-picker-modal .voice-gallery-grid{grid-template-columns:1fr}.voice-picker-modal .voice-gallery-card{display:grid;grid-template-columns:1fr;gap:2px}.voice-picker-modal-foot{position:sticky;bottom:-17px;background:#100d18;padding:12px 0 17px}.voice-browse-button{padding:10px;font-size:10px}}
