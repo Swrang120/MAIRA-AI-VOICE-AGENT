@@ -230,7 +230,7 @@ function AuthGate({ children }) {
     {message && <div className={message.startsWith("OTP sent")?"maira-auth-success":"maira-auth-alert"}>{message}</div>}
     <small className="maira-auth-foot">By continuing, you agree to use MAIRA responsibly. Mobile OTP requires an SMS provider configured in Supabase.</small>
   </div></div>;
-  return <>{children}<button className="maira-logout-button" onClick={logout} disabled={busy}>{busy?"Please wait…":"Sign out"}</button></>;
+  return <>{children}</>;
 }
 
 createRoot(document.getElementById("root")).render(<AuthGate><App/></AuthGate>);
