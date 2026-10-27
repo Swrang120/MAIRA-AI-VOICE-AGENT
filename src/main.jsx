@@ -144,7 +144,7 @@ function AuthGate({ children }) {
   };
   const googleLogin = () => run(async () => {
     if (!supabaseConfigured || !supabase) throw new Error("Supabase client is not configured. Check Vercel environment variables.");
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
+    const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: "https://maira-ai-voice-agent-swrang120.vercel.app" } });
     if (error) throw error;
   });
   const sendOtp = () => run(async () => {
