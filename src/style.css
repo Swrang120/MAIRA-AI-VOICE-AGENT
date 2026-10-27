@@ -52,3 +52,16 @@
 .maira-profile-trigger-label{display:inline-block!important;color:#f2d38a!important}
 .maira-profile-trigger svg{display:block;flex:0 0 auto}
 @media(max-width:520px){.top-actions{gap:6px}.maira-profile-trigger{min-width:38px;width:38px;height:38px;padding:4px!important;gap:0}.maira-profile-trigger-label,.maira-profile-trigger>svg{display:none!important}.maira-profile-trigger-avatar{width:28px;height:28px;flex-basis:28px}}
+
+
+/* Voice identity cards: avatar + playable provider sample */
+.voice-choice-card{display:flex;align-items:center;gap:13px;margin-top:13px;padding:13px;border:1px solid rgba(217,179,107,.25);border-radius:13px;background:linear-gradient(110deg,rgba(119,78,159,.16),rgba(22,16,34,.9));flex-wrap:wrap}
+.voice-choice-avatar{position:relative;flex:0 0 56px;width:56px;height:56px;display:grid;place-items:center;border-radius:17px;background:radial-gradient(circle at 25% 15%,#f2d8a0,#a77ad7 47%,#35214e 100%);border:1px solid rgba(255,224,168,.55);color:#21152f;font:800 18px Manrope,sans-serif;box-shadow:0 6px 24px rgba(183,135,230,.18)}
+.voice-avatar-mic{position:absolute;right:-5px;bottom:-5px;width:24px;height:24px;border:2px solid #151020;border-radius:50%;display:grid;place-items:center;background:#2c2040;color:#f1d18b}
+.voice-choice-meta{display:flex;flex:1;min-width:140px;flex-direction:column;gap:4px}
+.voice-choice-meta b{font:800 13px Manrope,sans-serif;color:#f6edff}
+.voice-choice-meta span{font-size:10px;color:#c6a8f2;text-transform:capitalize}
+.voice-choice-meta small{font-size:9px;line-height:1.4;color:#978ba9}
+.voice-sample-audio{width:100%;height:36px;flex-basis:100%;filter:sepia(.18) saturate(.75)}
+.sample-unavailable{font-size:9px;color:#d8b979}
+@media(min-width:1101px){.voice-sample-audio{max-width:100%}}
