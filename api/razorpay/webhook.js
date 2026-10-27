@@ -20,12 +20,12 @@ export default async function handler(req, res) {
     const a = Buffer.from(signature), b = Buffer.from(expected);
     if (!signature || a.length !== b.length || !crypto.timingSafeEqual(a, b)) return res.status(400).json({ error: "Invalid signature." });
     const event = JSON.parse(raw.toString("utf8"));
-    if (event.event !== "payment.captured" && event.event !== "order.paid") return res.status(200).json({ received: true, ignored: true });
+    if (event.event !== "payment.captured") return res.status(200).json({ received: true, ignored: true });
     const payment = event.payload?.payment?.entity;
     const orderEntity = event.payload?.order?.entity;
     const orderId = payment?.order_id || orderEntity?.id;
     const paymentId = payment?.id || null;
-    if (!orderId || (payment && payment.status !== "captured")) return res.status(200).json({ received: true, ignored: true });
+    if (!orderId || !payment || payment.status !== "captured" || !payment.id) return res.status(200).json({ received: true, ignored: true });
     const base = supabaseUrl.replace(/\/$/, "") + "/rest/v1";
     const headers = { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Content-Type": "application/json" };
     const find = await fetch(base + "/coin_purchases?select=id,user_id,coins,amount_paise,status&razorpay_order_id=eq." + encodeURIComponent(orderId) + "&limit=1", { headers });
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     if (!rows.length) return res.status(200).json({ received: true, unmatched: true });
     const purchase = rows[0];
     if (purchase.status === "paid") return res.status(200).json({ received: true, duplicate: true });
-    if (payment && (Number(payment.amount) !== Number(purchase.amount_paise) || payment.currency !== "INR")) return res.status(400).json({ error: "Payment amount/currency mismatch." });
+    if (Number(payment.amount) !== Number(purchase.amount_paise) || payment.currency !== "INR" || payment.order_id !== orderId) return res.status(400).json({ error: "Payment amount/currency mismatch." });
     // The ledger reference is unique; duplicate webhook deliveries cannot credit coins twice.
     const ledger = await fetch(base + "/coin_ledger?select=id&reference=eq.purchase:" + encodeURIComponent(orderId) + "&limit=1", { headers });
     const existing = await ledger.json();
