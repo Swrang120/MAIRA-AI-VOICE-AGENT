@@ -17,8 +17,8 @@ export default async function handler(req, res) {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  const keyId = process.env.RAZORPAY_KEY_ID || process.env.LIVE_API_KEY;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET || process.env.LIVE_SECRET;
   if (!supabaseUrl || !anonKey || !serviceKey || !keyId || !keySecret)
     return json(res, 503, { error: "Payment service is not fully configured on the server." });
   try {
