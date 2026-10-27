@@ -21,10 +21,11 @@ export default async function handler(req, res) {
   }
   const key = process.env.ELEVENLABS_API_KEY || process.env.ELEVENLABS_API;
   if (!key) return res.status(503).json({ error: "Voice cloning service is not configured on the server." });
-  const { name, description = "", sampleBase64, fileName = "voice-sample.mp3", consent, language = "Multilingual", gender = "Not specified", profileType = "Custom", destination = "private", customerEmail = "" } = req.body || {};
+  const { name, description = "", sampleBase64, fileName = "voice-sample.mp3", consent, publicListingConsent = false, language = "Multilingual", gender = "Not specified", profileType = "Custom", destination = "private", customerEmail = "" } = req.body || {};
   if (!consent) return res.status(400).json({ error: "Confirm documented permission from the voice owner." });
   if (!String(name || "").trim()) return res.status(400).json({ error: "Enter a name for this cloned voice." });
   if (!["private", "public", "customer"].includes(destination)) return res.status(400).json({ error: "Choose a valid destination." });
+  if (destination === "public" && publicListingConsent !== true) return res.status(400).json({ error: "Explicit permission to publish this voice is required." });
   if (destination === "customer" && !/^\S+@\S+\.\S+$/.test(String(customerEmail).trim())) return res.status(400).json({ error: "Enter a valid customer email address." });
   if (!sampleBase64 || typeof sampleBase64 !== "string") return res.status(400).json({ error: "Upload a voice sample first." });
   const match = sampleBase64.match(/^data:(audio\/[A-Za-z0-9.+-]+|video\/webm|application\/octet-stream);base64,([A-Za-z0-9+/=]+)$/);
@@ -91,7 +92,7 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: "Clone created at provider, but saving your private library failed. Check the voice_profiles schema and server configuration." });
     }
     if (destination === "public" || destination === "customer") {
-      const copy = { ...baseProfile, public_voice_id: baseProfile.public_voice_id + "-" + (destination === "public" ? "PUB" : "USR"), owner_id: destination === "customer" ? recipientId : identity.id, visibility: destination === "public" ? "public" : "private", public_listing_consent: destination === "public", public_listing_consent_at: destination === "public" ? new Date().toISOString() : null };
+      const copy = { ...baseProfile, public_voice_id: baseProfile.public_voice_id + "-" + (destination === "public" ? "PUB" : "USR"), owner_id: destination === "customer" ? recipientId : identity.id, visibility: destination === "public" ? "public" : "private", public_listing_consent: destination === "public" && publicListingConsent === true, public_listing_consent_at: destination === "public" && publicListingConsent === true ? new Date().toISOString() : null };
       const saveCopy = await fetch(supabaseUrl + "/rest/v1/voice_profiles", { method: "POST", headers, body: JSON.stringify(copy) });
       const copyRows = await saveCopy.json().catch(() => []);
       if (!saveCopy.ok || !copyRows?.[0]?.id) {
