@@ -44,7 +44,7 @@ function AdminApp() {
     if (!supabase || !session || role !== "admin") return;
     setLoading(true);
     const results = await Promise.all([
-      supabase.from("profiles").select("id,email,display_name,role,created_at").order("created_at",{ascending:false}).limit(500),
+      supabase.from("profiles").select("id,display_name,role,created_at").order("created_at",{ascending:false}).limit(500),
       supabase.from("voice_profiles").select("*").order("created_at",{ascending:false}).limit(500),
       supabase.from("voice_clone_requests").select("*").order("created_at",{ascending:false}).limit(500),
       supabase.from("voice_subscription_plans").select("*").order("created_at",{ascending:false}),
