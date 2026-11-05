@@ -257,6 +257,7 @@ function App() {
         if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.error || "Speech generation failed."); }
         const blob = await response.blob();
         setAudioUrl(old => { if (old) URL.revokeObjectURL(old); return URL.createObjectURL(blob); });
+        await refreshWallet(true);
         notify("MAIRA studio audio generated. Press Play in the audio player.");
       } catch (error) { notify(error.message || "Could not generate speech."); }
       finally { setGenerating(false); }
