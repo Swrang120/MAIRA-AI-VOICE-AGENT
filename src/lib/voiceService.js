@@ -79,12 +79,27 @@ export async function generateSpeech({ voiceId, text }) {
   if (!cleanText) throw new Error("Enter some text to generate speech.");
   if (cleanText.length > 5000) throw new Error("Text must be 5,000 characters or fewer.");
 
-  const { data, error } = await client.functions.invoke("generate-speech", {
-    body: { voiceId, text: cleanText },
+  // Use the same authenticated server route as the main studio UI.
+  // This keeps provider credentials server-side and applies the wallet debit rules.
+  const { data: sessionData, error: sessionError } = await client.auth.getSession();
+  if (sessionError) throw sessionError;
+  const token = sessionData?.session?.access_token;
+  if (!token) throw new Error("Sign in before generating speech.");
+
+  const response = await fetch("/api/elevenlabs/speech", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
+    body: JSON.stringify({ voiceId, text: cleanText }),
   });
-  if (error) throw error;
-  if (!data?.audioBase64) throw new Error("Voice provider returned no audio.");
-  const binary = atob(data.audioBase64);
-  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
-  return new Blob([bytes], { type: data.contentType || "audio/mpeg" });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.error || "Speech generation failed.");
+  }
+
+  const audio = await response.blob();
+  if (!audio.size) throw new Error("Voice provider returned no audio.");
+  return audio;
 }
