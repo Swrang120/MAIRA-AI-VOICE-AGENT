@@ -45,6 +45,11 @@ export default async function handler(req, res) {
       return res.status(status).json({ error: message });
     }
     const audio = Buffer.from(await upstream.arrayBuffer());
+    // A 2xx response with an empty body is not a successful TTS result; do not charge for it.
+    if (audio.length === 0) {
+      console.error("ElevenLabs returned an empty audio payload.");
+      return res.status(502).json({ error: "Voice provider returned no playable audio. No coins were deducted; please retry." });
+    }
     // Charge only after the provider returned a successful audio payload. Never charge browser previews or STT.
     const coins = Math.max(1, Math.ceil(text.length / 100));
     const debit = await fetch(base + "/rpc/debit_tts_coins", {
